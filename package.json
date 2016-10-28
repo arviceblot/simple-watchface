@@ -1,0 +1,48 @@
+{
+    "name": "simple watchface",
+    "author": "arviceblot",
+    "version": "1.0.0",
+    "keywords": [
+        "pebble-app"
+    ],
+    "private": true,
+    "dependencies": {},
+    "pebble": {
+        "displayName": "simple watchface",
+        "uuid": "4a2e90e7-66a4-4645-9c9b-2392d903ff49",
+        "sdkVersion": "3",
+        "enableMultiJS": true,
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk",
+            "diorite"
+        ],
+        "watchapp": {
+            "watchface": true
+        },
+        "messageKeys": [
+            "Temperature",
+            "Conditions"
+        ],
+        "capabilities": [
+            "location"
+        ],
+        "resources": {
+            "media": [
+                {
+                    "type": "font",
+                    "name": "FONT_PERFECT_DOS_48",
+                    "file": "fonts/perfect-dos-vga.ttf",
+                    "compatibility": "2.7"
+                },
+                {
+                    "type": "font",
+                    "name": "FONT_PERFECT_DOS_18",
+                    "file": "fonts/perfect-dos-vga.ttf",
+                    "compatibility": "2.7"
+                }
+            ]
+        }
+    }
+}
