@@ -150,7 +150,7 @@ static void update_date()
     struct tm *tick_time = localtime(&temp);
 
     static char s_buffer[16];
-    strftime(s_buffer, sizeof(s_buffer), "%a %b %d", tick_time);
+    strftime(s_buffer, sizeof(s_buffer), "%a %d %b", tick_time);
 
     // Display this date on the TextLayer
     text_layer_set_text(s_date_layer, s_buffer);
