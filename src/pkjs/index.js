@@ -1,3 +1,4 @@
+/*
 var myAPIKey = '791b7e2385768fc15b097fbe7d7cc491';
 
 var xhrRequest = function (url, type, callback) {
@@ -78,3 +79,4 @@ Pebble.addEventListener('appmessage',
         getWeather();
     }
 );
+*/

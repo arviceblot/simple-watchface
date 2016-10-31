@@ -3,14 +3,14 @@
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
-static TextLayer *s_temperature_layer;
-static TextLayer *s_conditions_layer;
+//static TextLayer *s_temperature_layer;
+//static TextLayer *s_conditions_layer;
 static TextLayer *s_firmware_layer;
 static TextLayer *s_battery_layer;
 static TextLayer *s_bluetooth_layer;
 
-static GFont s_font_48;
-static GFont s_font_18;
+//static GFont s_font_48;
+//static GFont s_font_18;
 
 static int s_battery_level;
 
@@ -19,22 +19,24 @@ static void main_window_unload(Window *window);
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed);
 
+/*
 static void inbox_received_callback(DictionaryIterator *iterator, void *context);
 static void inbox_dropped_callback(AppMessageResult reason, void *context);
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context);
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context);
+*/
 
 static void update_time();
 static void update_date();
-static void update_weather();
+//static void update_weather();
 static void battery_callback(BatteryChargeState state);
 static void bluetooth_callback(bool connected);
 
 static void main_window_load(Window *window)
 {
     // load fonts
-    s_font_48 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PERFECT_DOS_48));
-    s_font_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PERFECT_DOS_18));
+    //s_font_48 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PERFECT_DOS_48));
+    //s_font_18 = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PERFECT_DOS_18));
 
     // Get information about the Window
     Layer *window_layer = window_get_root_layer(window);
@@ -47,7 +49,7 @@ static void main_window_load(Window *window)
     s_firmware_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
     text_layer_set_background_color(s_firmware_layer, GColorClear);
     text_layer_set_text_color(s_firmware_layer, GColorWhite);
-    text_layer_set_font(s_firmware_layer, s_font_18);
+    text_layer_set_font(s_firmware_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     static char s_firmware_string[8];
     snprintf(s_firmware_string, sizeof(s_firmware_string), "v%u.%u", watch_version.major, watch_version.minor);
     text_layer_set_text(s_firmware_layer, s_firmware_string);
@@ -57,11 +59,12 @@ static void main_window_load(Window *window)
     s_time_layer = text_layer_create(GRect(0, 64, bounds.size.w, 50));
     text_layer_set_background_color(s_time_layer, GColorClear);
     text_layer_set_text_color(s_time_layer, GColorWhite);
-    text_layer_set_font(s_time_layer, s_font_48);
+    text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
     text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 
     // Create temperature Layer
+    /*
     s_temperature_layer = text_layer_create(GRect(0, 44, bounds.size.w, 23));
     text_layer_set_background_color(s_temperature_layer, GColorClear);
     text_layer_set_text_color(s_temperature_layer, GColorWhite);
@@ -77,12 +80,13 @@ static void main_window_load(Window *window)
     text_layer_set_text(s_conditions_layer, "...");
     text_layer_set_text_alignment(s_conditions_layer, GTextAlignmentRight);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_conditions_layer));
+    */
 
     // battery
     s_battery_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
     text_layer_set_background_color(s_battery_layer, GColorClear);
     text_layer_set_text_color(s_battery_layer, GColorWhite);
-    text_layer_set_font(s_battery_layer, s_font_18);
+    text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     text_layer_set_text_alignment(s_battery_layer, GTextAlignmentRight);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
 
@@ -90,7 +94,7 @@ static void main_window_load(Window *window)
     s_date_layer = text_layer_create(GRect(0, 120, bounds.size.w, 23));
     text_layer_set_background_color(s_date_layer, GColorClear);
     text_layer_set_text_color(s_date_layer, GColorWhite);
-    text_layer_set_font(s_date_layer, s_font_18);
+    text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
 
@@ -98,7 +102,7 @@ static void main_window_load(Window *window)
     s_bluetooth_layer = text_layer_create(GRect(0, 22, bounds.size.w, 23));
     text_layer_set_background_color(s_bluetooth_layer, GColorClear);
     text_layer_set_text_color(s_bluetooth_layer, GColorWhite);
-    text_layer_set_font(s_bluetooth_layer, s_font_18);
+    text_layer_set_font(s_bluetooth_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_bluetooth_layer));
 }
 
@@ -107,15 +111,15 @@ static void main_window_unload(Window *window)
     // Destroy TextLayer
     text_layer_destroy(s_firmware_layer);
     text_layer_destroy(s_time_layer);
-    text_layer_destroy(s_temperature_layer);
-    text_layer_destroy(s_conditions_layer);
+    //text_layer_destroy(s_temperature_layer);
+    //text_layer_destroy(s_conditions_layer);
     text_layer_destroy(s_battery_layer);
     text_layer_destroy(s_date_layer);
     text_layer_destroy(s_bluetooth_layer);
 
     // unload fonts
-    fonts_unload_custom_font(s_font_48);
-    fonts_unload_custom_font(s_font_18);
+    //fonts_unload_custom_font(s_font_48);
+    //fonts_unload_custom_font(s_font_18);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
@@ -125,11 +129,13 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
         // update the time every minute
         update_time();
     }
+    /*
     if ((units_changed & HOUR_UNIT) != 0)
     {
         // update weather every hour
         update_weather();
     }
+    */
     if ((units_changed & DAY_UNIT) != 0)
     {
         // update the date
@@ -164,6 +170,7 @@ static void update_time()
     text_layer_set_text(s_time_layer, s_buffer);
 }
 
+/*
 static void update_weather()
 {
     DictionaryIterator *iter;
@@ -171,6 +178,7 @@ static void update_weather()
     dict_write_uint8(iter, 0, 0);
     app_message_outbox_send();
 }
+*/
 
 static void battery_callback(BatteryChargeState state)
 {
@@ -186,6 +194,7 @@ static void bluetooth_callback(bool connected)
     text_layer_set_text(s_bluetooth_layer, connected ? "Connected": "Disconnected");
 }
 
+/*
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {
     // Store incoming information
@@ -224,6 +233,7 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
 {
     APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
+*/
 
 static void init()
 {
@@ -245,6 +255,7 @@ static void init()
     update_time();
     update_date();
 
+    /*
     // Register callbacks
     app_message_register_inbox_received(inbox_received_callback);
     app_message_register_inbox_dropped(inbox_dropped_callback);
@@ -255,6 +266,7 @@ static void init()
     const int inbox_size = 128;
     const int outbox_size = 128;
     app_message_open(inbox_size, outbox_size);
+    */
 
     // Register for battery level updates
     battery_state_service_subscribe(battery_callback);
