@@ -1,4 +1,3 @@
-/*
 var myAPIKey = '791b7e2385768fc15b097fbe7d7cc491';
 
 var xhrRequest = function (url, type, callback) {
@@ -66,9 +65,6 @@ function getWeather() {
 Pebble.addEventListener('ready',
     function (e) {
         console.log("PebbleKit JS ready!");
-
-        // Get the initial weather
-        getWeather();
     }
 );
 
@@ -79,4 +75,3 @@ Pebble.addEventListener('appmessage',
         getWeather();
     }
 );
-*/
