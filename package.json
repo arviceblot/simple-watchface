@@ -1,35 +1,35 @@
 {
-    "name": "simple watchface",
     "author": "arviceblot",
-    "version": "1.0.0",
+    "dependencies": {},
     "keywords": [
         "pebble-app"
     ],
-    "private": true,
-    "dependencies": {},
+    "name": "simple-watchface",
     "pebble": {
+        "capabilities": [
+            "location"
+        ],
         "displayName": "simple watchface",
-        "uuid": "4a2e90e7-66a4-4645-9c9b-2392d903ff49",
-        "sdkVersion": "3",
         "enableMultiJS": true,
+        "messageKeys": [
+            "Temperature",
+            "Conditions"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
         "targetPlatforms": [
             "aplite",
             "basalt",
             "chalk",
             "diorite"
         ],
+        "uuid": "4a2e90e7-66a4-4645-9c9b-2392d903ff49",
         "watchapp": {
             "watchface": true
-        },
-        "messageKeys": [
-            "Temperature",
-            "Conditions"
-        ],
-        "capabilities": [
-            "location"
-        ],
-        "resources": {
-            "media": []
         }
-    }
+    },
+    "version": "1.0.0"
 }

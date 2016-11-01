@@ -2,6 +2,7 @@
 
 typedef struct
 {
+    time_t time;
     int temperature;
     char conditions[16];
 } WeatherData;
@@ -13,8 +14,7 @@ static WeatherData weather_data;
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
-static TextLayer *s_temperature_layer;
-static TextLayer *s_conditions_layer;
+static TextLayer *s_weather_layer;
 static TextLayer *s_firmware_layer;
 static TextLayer *s_battery_layer;
 static TextLayer *s_bluetooth_layer;
@@ -64,25 +64,17 @@ static void main_window_load(Window *window)
     text_layer_set_background_color(s_time_layer, GColorClear);
     text_layer_set_text_color(s_time_layer, GColorWhite);
     text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
-    text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+    text_layer_set_text_alignment(s_time_layer, GTextAlignmentRight);
     layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 
-    // Create temperature Layer
-    s_temperature_layer = text_layer_create(GRect(0, 22, bounds.size.w, 23));
-    text_layer_set_background_color(s_temperature_layer, GColorClear);
-    text_layer_set_text_color(s_temperature_layer, GColorWhite);
-    text_layer_set_font(s_temperature_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text(s_temperature_layer, "...");
-    layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_temperature_layer));
-
-    // create the conditions layer
-    s_conditions_layer = text_layer_create(GRect(0, 22, bounds.size.w, 23));
-    text_layer_set_background_color(s_conditions_layer, GColorClear);
-    text_layer_set_text_color(s_conditions_layer, GColorWhite);
-    text_layer_set_font(s_conditions_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text(s_conditions_layer, "...");
-    text_layer_set_text_alignment(s_conditions_layer, GTextAlignmentRight);
-    layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_conditions_layer));
+    // Create weather Layer
+    s_weather_layer = text_layer_create(GRect(0, 44, bounds.size.w, 23));
+    text_layer_set_background_color(s_weather_layer, GColorClear);
+    text_layer_set_text_color(s_weather_layer, GColorWhite);
+    text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    text_layer_set_text(s_weather_layer, "...");
+    text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
+    layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weather_layer));
 
     // battery
     s_battery_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
@@ -93,11 +85,11 @@ static void main_window_load(Window *window)
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
 
     // date layer
-    s_date_layer = text_layer_create(GRect(0, 120, bounds.size.w, 23));
+    s_date_layer = text_layer_create(GRect(0, 112, bounds.size.w, 23));
     text_layer_set_background_color(s_date_layer, GColorClear);
     text_layer_set_text_color(s_date_layer, GColorWhite);
     text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
+    text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
 
     // bluetooth connection text
@@ -114,8 +106,7 @@ static void main_window_unload(Window *window)
     // Destroy TextLayer
     text_layer_destroy(s_firmware_layer);
     text_layer_destroy(s_time_layer);
-    text_layer_destroy(s_temperature_layer);
-    text_layer_destroy(s_conditions_layer);
+    text_layer_destroy(s_weather_layer);
     text_layer_destroy(s_battery_layer);
     text_layer_destroy(s_date_layer);
     text_layer_destroy(s_bluetooth_layer);
@@ -146,8 +137,23 @@ static void update_date()
     time_t temp = time(NULL);
     struct tm *tick_time = localtime(&temp);
 
+    static char s_day_buffer[4];
+    strftime(s_day_buffer, sizeof(s_day_buffer), "%a", tick_time);
+    
+    static char s_date_buffer[3];
+    snprintf(s_date_buffer, sizeof(s_date_buffer), "%d", tick_time->tm_mday);
+    // remove leading '0'
+    if (s_date_buffer[0] == '0')
+    {
+        memmove(s_date_buffer, &s_date_buffer[1], sizeof(s_date_buffer) - 1);
+    }
+    
+    static char s_month_buffer[4];
+    strftime(s_month_buffer, sizeof(s_month_buffer), "%b", tick_time);
+    
     static char s_buffer[16];
-    strftime(s_buffer, sizeof(s_buffer), "%a %d %b", tick_time);
+    snprintf(s_buffer, sizeof(s_buffer), "%s %s %s", s_day_buffer, s_date_buffer, s_month_buffer);
+    //strftime(s_buffer, sizeof(s_buffer), "%a %d %b", tick_time);
 
     // Display this date on the TextLayer
     text_layer_set_text(s_date_layer, s_buffer);
@@ -162,6 +168,12 @@ static void update_time()
     // Write the current hours and minutes into a buffer
     static char s_buffer[8];
     strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
+    
+    // remove leading '0'
+    if (s_buffer[0] == '0')
+    {
+        memmove(s_buffer, &s_buffer[1], sizeof(s_buffer)-1); 
+    }
 
     // Display this time on the TextLayer
     text_layer_set_text(s_time_layer, s_buffer);
@@ -186,16 +198,20 @@ static void load_weather()
     {
         persist_read_data(WEATHER_DATA_KEY, &weather_data, sizeof(WeatherData));
 
-        static char temperature_buffer[8];
-        static char conditions_buffer[16];
+        // get new weather if saved data is too old
+        if (time(NULL) - weather_data.time > SECONDS_PER_HOUR)
+        {
+            update_weather();
+            return;
+        }
+        
+        static char display_buffer[32];
 
         // update UI
-        snprintf(temperature_buffer, sizeof(temperature_buffer), "%dF", weather_data.temperature);
-        snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", weather_data.conditions);
+        snprintf(display_buffer, sizeof(display_buffer), "%d°F %s", weather_data.temperature, weather_data.conditions);
 
         // display text
-        text_layer_set_text(s_temperature_layer, temperature_buffer);
-        text_layer_set_text(s_conditions_layer, conditions_buffer);
+        text_layer_set_text(s_weather_layer, display_buffer);
     }
     else
     {
@@ -226,23 +242,20 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // If all data is available, use it
     if (temp_tuple && conditions_tuple)
     {
-        // Store incoming information
-        static char temperature_buffer[8];
-        static char conditions_buffer[16];
+        static char display_buffer[32];
 
         // save here
+        weather_data.time = time(NULL);
         weather_data.temperature = (int)temp_tuple->value->int32;
         strcpy(weather_data.conditions, conditions_tuple->value->cstring);
 
         // store values in persistent storage
         save_weather();
 
-        snprintf(temperature_buffer, sizeof(temperature_buffer), "%dF", weather_data.temperature);
-        snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", weather_data.conditions);
+        snprintf(display_buffer, sizeof(display_buffer), "%d°F %s", weather_data.temperature, weather_data.conditions);
 
         // display text
-        text_layer_set_text(s_temperature_layer, temperature_buffer);
-        text_layer_set_text(s_conditions_layer, conditions_buffer);
+        text_layer_set_text(s_weather_layer, display_buffer);
     }
 }
 
@@ -303,6 +316,7 @@ static void init()
     bluetooth_callback(connection_service_peek_pebble_app_connection());
 
     // set initial weather data
+    weather_data.time = time(NULL);
     weather_data.temperature = 42;
     strcpy(weather_data.conditions, "Moose");
 
