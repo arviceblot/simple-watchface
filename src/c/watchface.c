@@ -20,6 +20,7 @@ static TextLayer *s_weather_layer;
 static TextLayer *s_firmware_layer;
 static TextLayer *s_battery_layer;
 static TextLayer *s_bluetooth_layer;
+static TextLayer *s_heartrate_layer;
 
 static int s_battery_level;
 
@@ -42,6 +43,8 @@ static void bluetooth_callback(bool connected);
 static void save_weather();
 static void load_weather();
 
+static void update_heartrate();
+
 static void main_window_load(Window *window)
 {
     // Get information about the Window
@@ -52,7 +55,7 @@ static void main_window_load(Window *window)
     WatchInfoVersion watch_version = watch_info_get_firmware_version();
 
     // create the base text
-    s_firmware_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
+    s_firmware_layer = text_layer_create(GRect(0, 0, bounds.size.w, 22));
     text_layer_set_background_color(s_firmware_layer, GColorClear);
     text_layer_set_text_color(s_firmware_layer, GColorWhite);
     text_layer_set_font(s_firmware_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
@@ -62,24 +65,23 @@ static void main_window_load(Window *window)
     layer_add_child(window_layer, text_layer_get_layer(s_firmware_layer));
 
     // Create the TextLayer with specific bounds
-    s_time_layer = text_layer_create(GRect(0, 64, bounds.size.w, 50));
+    s_time_layer = text_layer_create(GRect(0, 64, bounds.size.w, 46));
     text_layer_set_background_color(s_time_layer, GColorClear);
     text_layer_set_text_color(s_time_layer, GColorWhite);
     text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
-    text_layer_set_text_alignment(s_time_layer, GTextAlignmentRight);
+    text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 
     // Create weather Layer
-    s_weather_layer = text_layer_create(GRect(0, 44, bounds.size.w, 23));
+    s_weather_layer = text_layer_create(GRect(0, 44, bounds.size.w, 22));
     text_layer_set_background_color(s_weather_layer, GColorClear);
     text_layer_set_text_color(s_weather_layer, GColorWhite);
     text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text(s_weather_layer, "...");
-    text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
+    text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weather_layer));
 
     // battery
-    s_battery_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
+    s_battery_layer = text_layer_create(GRect(0, 0, bounds.size.w, 22));
     text_layer_set_background_color(s_battery_layer, GColorClear);
     text_layer_set_text_color(s_battery_layer, GColorWhite);
     text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
@@ -87,20 +89,27 @@ static void main_window_load(Window *window)
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
 
     // date layer
-    s_date_layer = text_layer_create(GRect(0, 112, bounds.size.w, 23));
+    s_date_layer = text_layer_create(GRect(0, 112, bounds.size.w, 22));
     text_layer_set_background_color(s_date_layer, GColorClear);
     text_layer_set_text_color(s_date_layer, GColorWhite);
     text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
+    text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
 
     // bluetooth connection text
-    s_bluetooth_layer = text_layer_create(GRect(0, 0, bounds.size.w, 23));
+    s_bluetooth_layer = text_layer_create(GRect(0, 0, bounds.size.w, 22));
     text_layer_set_background_color(s_bluetooth_layer, GColorClear);
     text_layer_set_text_color(s_bluetooth_layer, GColorWhite);
     text_layer_set_font(s_bluetooth_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     text_layer_set_text_alignment(s_bluetooth_layer, GTextAlignmentCenter);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_bluetooth_layer));
+    
+    // heart rate
+    s_heartrate_layer = text_layer_create(GRect(0, bounds.size.h - 22, bounds.size.w, 22));
+    text_layer_set_background_color(s_heartrate_layer, GColorClear);
+    text_layer_set_text_color(s_heartrate_layer , GColorWhite);
+    text_layer_set_font(s_heartrate_layer , fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_heartrate_layer ));
 }
 
 static void main_window_unload(Window *window)
@@ -112,6 +121,7 @@ static void main_window_unload(Window *window)
     text_layer_destroy(s_battery_layer);
     text_layer_destroy(s_date_layer);
     text_layer_destroy(s_bluetooth_layer);
+    text_layer_destroy(s_heartrate_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
@@ -120,6 +130,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
     {
         // update the time every minute
         update_time();
+        update_heartrate();
     }
     if ((units_changed & HOUR_UNIT) != 0)
     {
@@ -285,6 +296,22 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
     APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
+static void update_heartrate()
+{
+    HealthServiceAccessibilityMask hr = health_service_metric_accessible(HealthMetricHeartRateBPM, time(NULL), time(NULL));
+    if (hr & HealthServiceAccessibilityMaskAvailable)
+    {
+        HealthValue val = health_service_peek_current_value(HealthMetricHeartRateBPM);
+        if (val > 0)
+        {
+            // Display HRM value
+            static char s_hrm_buffer[8];
+            snprintf(s_hrm_buffer, sizeof(s_hrm_buffer), "%lu BPM", (uint32_t)val);
+            text_layer_set_text(s_heartrate_layer, s_hrm_buffer);
+        }
+    }
+}
+
 static void init()
 {
     s_main_window = window_create();
@@ -330,6 +357,9 @@ static void init()
     weather_data.time = time(NULL);
     weather_data.temperature = 42;
     strcpy(weather_data.conditions, "Moose");
+    
+    // get initial heart rate
+    update_heartrate();
 }
 
 static void deinit()
