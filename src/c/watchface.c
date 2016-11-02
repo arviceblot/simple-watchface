@@ -11,6 +11,8 @@ static uint32_t WEATHER_DATA_KEY = 56;
 
 static WeatherData weather_data;
 
+static bool s_js_ready;
+
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
@@ -235,6 +237,15 @@ static void bluetooth_callback(bool connected)
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {
+    // check for js_ready
+    Tuple *ready_tuple = dict_find(iterator, MESSAGE_KEY_JSReady);
+    if (ready_tuple)
+    {
+        // PebbleKit JS is ready! Safe to send messages
+        s_js_ready = true;
+        load_weather();
+    }
+    
     // Read tuples for data
     Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_Temperature);
     Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_Conditions);
@@ -319,9 +330,6 @@ static void init()
     weather_data.time = time(NULL);
     weather_data.temperature = 42;
     strcpy(weather_data.conditions, "Moose");
-
-    // load initial weather
-    load_weather();
 }
 
 static void deinit()

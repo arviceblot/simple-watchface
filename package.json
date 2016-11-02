@@ -13,7 +13,8 @@
         "enableMultiJS": true,
         "messageKeys": [
             "Temperature",
-            "Conditions"
+            "Conditions",
+            "JSReady"
         ],
         "projectType": "native",
         "resources": {
